@@ -1,0 +1,4 @@
+https://github.com/k8snetworkplumbingwg/sriov-network-device-plugin.git
+
+
+# vfs 설정 관련도 해당 Git 안에 있음
