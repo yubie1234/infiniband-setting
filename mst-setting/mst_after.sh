@@ -52,7 +52,7 @@ INDEX=$(expr $NEED_NUM_OF_VFS - 1)
 for i in $(seq 0 $INDEX);
 do
    echo $i
-
+   echo ${TIME_GUID[0]}:${TIME_GUID[1]}:${TIME_GUID[2]}:${TIME_GUID[3]}:${TIME_GUID[4]}:${GUID[5]}:${GUID[6]}:$i
    echo ${TIME_GUID[0]}:${TIME_GUID[1]}:${TIME_GUID[2]}:${TIME_GUID[3]}:${TIME_GUID[4]}:${GUID[5]}:${GUID[6]}:$i > /sys/class/infiniband/mlx5_0/device/sriov/$i/node
    echo ${TIME_GUID[0]}:${TIME_GUID[1]}:${TIME_GUID[2]}:${TIME_GUID[3]}:${TIME_GUID[4]}:${GUID[5]}:${GUID[6]}:$i > /sys/class/infiniband/mlx5_0/device/sriov/$i/port
    # echo 00:1$1:22:33:44:55:2:0 #> /sys/class/infiniband/mlx5_0/device/sriov/$i/port

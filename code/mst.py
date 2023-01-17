@@ -120,8 +120,7 @@ class Mst:
         
         mst_setting = subprocess.check_output(["echo y | mlxconfig -d {MST_DEVICE} set {SET_COMMAND}".format(MST_DEVICE=self.mst_device, SET_COMMAND=set_command)], shell=True, stderr=subprocess.STDOUT).decode("utf-8")
         print(mst_setting)
-
-    # 
+    #
     def is_sriov_avaliable(self):
         is_avaliable = True
         if self.mst_sriov_en == MST_FALSE:
@@ -134,7 +133,6 @@ class Mst:
             print("[Warn] Need to set NEED_NUM_OF_VFS=(More than 1). Current NUM_OF_VFS={}".format(self.mst_numvfs))
             is_avaliable = False
         return is_avaliable
-
 
     def is_same_config(self, sriov_en, numvfs):
         if sriov_en is None:
@@ -153,5 +151,3 @@ class Mst:
             return False
 
 
-mst = Mst()
-print(mst.set_mst_for_sriov(sriov_en=True, numvfs=10))

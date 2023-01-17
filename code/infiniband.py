@@ -23,6 +23,9 @@ class AllInfiniband():
         for i, path in enumerate(path_list): 
             path_list[i] = path.replace("infiniband", "")
 
+        if len(path_list) == 0:
+            raise Exception("Infiniband Not Found.")
+
         return path_list
 
     def get_infiniband(self, interface_name):
@@ -30,6 +33,23 @@ class AllInfiniband():
             if infiniband.interface_name == interface_name:
                 return infiniband
 
+        raise Exception("Not Found {} Infiniband Device.".format(interface_name))
+
+    def get_pf_infiniband(self):
+        infiniband_list = []
+        for infiniband in self.infiniband_list:
+            if infiniband.sriov_func == SRIOV_PF:
+                infiniband_list.append(infiniband)
+
+        return infiniband_list
+
+    def get_vf_infiniband(self):
+        infiniband_list = []
+        for infiniband in self.infiniband_list:
+            if infiniband.sriov_func == SRIOV_VF:
+                infiniband_list.append(infiniband)
+
+        return infiniband_list
 
 class Infiniband:
 
@@ -44,7 +64,10 @@ class Infiniband:
         self.node_guid = self.get_node_guid(path=path)
 
     def get_interface_name(self, path):
-        interface_name = os.listdir(path+"/net/")[-1]
+        try:
+            interface_name = os.listdir(path+"/net/")[-1]
+        except IndexError as ie:
+            raise Exception("Infiniband interface name empty.")
         return interface_name
 
 
@@ -67,7 +90,7 @@ class Infiniband:
         with open(path + item, "r") as f:
             numvfs = f.read().replace("\n", "")
 
-        return numvfs
+        return int(numvfs)
 
     def get_totalvfs(self, path):
         # 활성화 할 수 있는 총 vf 개수 sriov_totalvfs
@@ -75,7 +98,7 @@ class Infiniband:
         item = "/sriov_totalvfs"
         with open(path + item, "r") as f:
             totalvfs = f.read().replace("\n", "")
-        return totalvfs
+        return int(totalvfs)
 
     def get_node_guid(self, path):
         item = "/infiniband/{mlx_name}/node_guid".format(mlx_name=self.mlx_name)
