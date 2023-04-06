@@ -5,12 +5,12 @@
 # 3. MST SRIOV 활성화 상태 정보 조회 --mst-status, --mst-status-all-config
 # 4. MST SRIOV 활성화 및 NUM VF 개수 설정 --mst-setting --mst-sriov-en 0|1 --mst-numvfs NUM(>0)
 # 5. VF NUM VF 생성 --vf-setting --vf-root ib0 --vf-numvfs NUM(>0) OPTIONAL --vf-guid-set --vf-debug
-from code import AllInfiniband, Mst, VFsSetting
+from code import AllInfiniband, Mst, VFsSetting, IbDriver, IbService
 
 def custom_bool(int_):
     if int_ is None:
         return None
-    if int_ == 0:
+    if int(int_) == 0:
         return False
     else:
         return True
@@ -18,6 +18,8 @@ def custom_bool(int_):
 import pprint
 import argparse
 parser = argparse.ArgumentParser(description="For Infiniband Setting.")
+parser.add_argument('--check-all', action='store_true', help='Show All setting status.')
+
 parser.add_argument('--ib-all', action='store_true', help='Show All Infiniband interface info.')
 parser.add_argument('--ib-pf-all', action='store_true', help='Show All pf Infiniband interface info.')
 parser.add_argument('--ib-vf-all', action='store_true', help='Show All vf Infiniband interface info.')
@@ -52,7 +54,68 @@ def show_ib_vf_all():
 def show_ib_select(interface_name):
     pprint.pprint(AllInfiniband().get_infiniband(interface_name=interface_name).__dict__)
 
+
+def check_all_print():
+    EMPTY_GUID = "0000:0000:0000:0000"
+
+    form = "|{0:^25}|{1:^20}|{2:^20}|"
+    check_form = "|{0:<25}|{1:^20}|{2:^20}|"
+    base = form.format("-"*25, "-"*20, "-"*20)
+    head = form.format("Check List", "Result", "Status")
+    print(base)
+    print(head)
+    print(base)
+    check_list = []
+    try:
+        mst = Mst(error_raise=False)
+    except Exception as e:
+        raise e
+        pass
+    
+    all_infiniband = AllInfiniband()
+    pf_infiniband_list = all_infiniband.get_pf_infiniband()
+
+    
+    
+
+    check_list.append(check_form.format("OFED INSTALLED", str(IbDriver().is_ofed_installed()), ""))
+    check_list.append(check_form.format("OFED RELATED SERVICE ", str(IbService().is_ib_service_status_ok()), ""))
+    interface = "{} - ({})".format(len(pf_infiniband_list), ",".join([ pf.interface_name for pf in pf_infiniband_list ]))
+    check_list.append(check_form.format("IB Interface", interface, ""))
+    check_list.append(check_form.format("MST SRIOV ENABLE", mst.mst_sriov_en, ""))
+    check_list.append(check_form.format("MST NUMVFS", mst.mst_numvfs, ""))
+
+    # PF 마다 존재
+    for pf_infiniband in pf_infiniband_list:
+        check_list.append(check_form.format("VF NUM", "{}/{}".format(pf_infiniband.numvfs, pf_infiniband.totalvfs), ""))
+        check_list.append(check_form.format("VF GUID NOT EMPTY", str(pf_infiniband.is_vf_guid_not_empty()), ""))
+    for check in check_list:
+        print(check)
+    print(base)
+    # print("OFED INSTALLED ? ", IbDriver().is_ofed_installed())
+    # print(IbService().is_ib_service_status_ok())
+    # print("OFED INSTALLED ") # True
+    # print("OFED SERVICE") # Active
+    # print("IB NUM OF PF") # 1 이상
+    # print("MST SRIOV ENABLE ") # On
+    # print("MST NUMVFS ") # 1 이상
+    # print("VF SETTING ") # VF 존재, GUID OK
+                    
+
+
+
+
+
 if __name__ == "__main__":
+
+    if args.check_all:
+        # ofed installed check
+        # ofed service check
+        # ib exist check
+        # mfs sriov enable check
+        # mfs setting check
+        # vf setting check
+        check_all_print()
 
     if args.ib_all:
         show_ib_all()

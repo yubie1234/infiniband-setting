@@ -34,15 +34,28 @@ MST_TRUE = "True(1)"
 MST_FALSE = "False(0)"
 
 class Mst:
-    def __init__(self):
-        self._system_check() # binary exist check
+    def __init__(self, error_raise=True):
+        if error_raise:
+            self._system_check() # binary exist check
+            self.mst_device = self.get_mst_device()
+            self.mst_query = self.get_mst_query(mst_device=self.mst_device)
+            
+            self.mst_sriov_en = self.get_mst_sriov_en()
+            self.mst_numvfs = self.get_mst_numvfs()
 
-        self.mst_device = self.get_mst_device()
-        self.mst_query = self.get_mst_query(mst_device=self.mst_device)
+        else :
+            self.mst_device = self._raise_handle(func=self.get_mst_device, kwargs={}, default_value="")
+            self.mst_query = self._raise_handle(func=self.get_mst_query, kwargs={"mst_device": self.mst_device}, default_value="")
+            
+            self.mst_sriov_en = self._raise_handle(func=self.get_mst_sriov_en, kwargs={}, default_value="N/A")
+            self.mst_numvfs = self._raise_handle(func=self.get_mst_numvfs, kwargs={}, default_value="N/A") 
 
-        # Query 관련
-        self.mst_sriov_en = self.get_mst_sriov_en()
-        self.mst_numvfs = self.get_mst_numvfs()
+
+    def _raise_handle(self, func, kwargs, default_value):
+        try:
+            return func(**kwargs)
+        except Exception as e:
+            return default_value
 
     def _system_check(self):
         try:
@@ -54,7 +67,7 @@ class Mst:
     def get_mst_device(self):
         try:
             # mst status | grep /dev | awk '{print $1}'
-            mst_status = subprocess.check_output(["mst status "], shell=True, stderr=subprocess.STDOUT).decode("utf-8").split()
+            mst_status = subprocess.check_output(["mst start && mst status "], shell=True, stderr=subprocess.STDOUT).decode("utf-8").split()
             for line in mst_status:
                 if "/dev/mst" in line:
                     return line
@@ -75,7 +88,7 @@ class Mst:
             if " {key} ".format(key=key) in query:
                 return query.split()[-1]
 
-        raise Exception("{key} KEY Not Found.".format(key))
+        raise Exception("{key} KEY Not Found.".format(key=key))
 
     def get_mst_sriov_en(self):
         return self.get_mst_value_by_key(key="SRIOV_EN")

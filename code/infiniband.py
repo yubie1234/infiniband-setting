@@ -10,7 +10,13 @@ class AllInfiniband():
         self.infiniband_list = []
 
         for path in self.get_infiniband_devices_path():
-            self.infiniband_list.append(Infiniband(path=path))
+            try:
+                infiniband = Infiniband(path=path)
+            except Exception as e:
+                raise e
+                continue
+                
+            self.infiniband_list.append(infiniband)
 
 
     def get_infiniband_devices_path(self):
@@ -50,7 +56,7 @@ class AllInfiniband():
                 infiniband_list.append(infiniband)
 
         return infiniband_list
-
+EMPTY_GUID = "0000:0000:0000:0000"
 class Infiniband:
 
     def __init__(self, path):
@@ -63,11 +69,20 @@ class Infiniband:
 
         self.node_guid = self.get_node_guid(path=path)
 
+        # PF인 경우 해당 PF가 가지고 있는 VF들
+        if self.sriov_func == SRIOV_PF:
+            self.vf_list = self.get_vf_list(path=path)
+        else:
+            self.vf_list = []
+
     def get_interface_name(self, path):
         try:
             interface_name = os.listdir(path+"/net/")[-1]
         except IndexError as ie:
-            raise Exception("Infiniband interface name empty.")
+            # raise Exception("Infiniband interface name empty.")
+            return None
+        except FileNotFoundError as fe:
+            return None
         return interface_name
 
 
@@ -87,8 +102,11 @@ class Infiniband:
         # PF - 0 ~ N
         # VF - 0
         item = "/sriov_numvfs"
-        with open(path + item, "r") as f:
-            numvfs = f.read().replace("\n", "")
+        try:
+            with open(path + item, "r") as f:
+                numvfs = f.read().replace("\n", "")
+        except FileNotFoundError as fne:
+            numvfs = 0
 
         return int(numvfs)
 
@@ -96,8 +114,13 @@ class Infiniband:
         # 활성화 할 수 있는 총 vf 개수 sriov_totalvfs
         # + /sriov_totalvfs
         item = "/sriov_totalvfs"
-        with open(path + item, "r") as f:
-            totalvfs = f.read().replace("\n", "")
+
+        try:
+            with open(path + item, "r") as f:
+                totalvfs = f.read().replace("\n", "")
+        except FileNotFoundError as fne:
+            totalvfs = 0
+
         return int(totalvfs)
 
     def get_node_guid(self, path):
@@ -105,3 +128,20 @@ class Infiniband:
         with open(path + item, "r") as f:
             node_guid = f.read().replace("\n", "")
         return node_guid
+
+    def get_vf_list(self, path):
+        vf_list = []
+        for item in sorted(os.listdir(path)):
+            if item.find("virtfn") == 0 and os.path.islink(path + item):
+                vf_list.append(Infiniband(os.path.realpath(path + item)))
+
+        return vf_list
+
+    def is_vf_guid_not_empty(self):
+        # PF 이면서 VF 1개 이상일 때 GUID 값이 0000으로 구성되어 있는지 아닌지 확인
+
+        for vf in self.vf_list:
+            if vf.node_guid == EMPTY_GUID:
+                return False
+        
+        return True
