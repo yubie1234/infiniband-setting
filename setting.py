@@ -79,6 +79,7 @@ def check_all_print():
     
 
     check_list.append(check_form.format("OFED INSTALLED", str(IbDriver().is_ofed_installed()), ""))
+    check_list.append(check_form.format("OFED VERSION", str(IbDriver().ofed_version), ""))
     check_list.append(check_form.format("OFED RELATED SERVICE ", str(IbService().is_ib_service_status_ok()), ""))
     interface = "{} - ({})".format(len(pf_infiniband_list), ",".join([ pf.interface_name for pf in pf_infiniband_list ]))
     check_list.append(check_form.format("IB Interface", interface, ""))
